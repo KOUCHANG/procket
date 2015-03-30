@@ -168,10 +168,10 @@
 %% NOTE: the man page says k is a u_long,
 %% the header says u_int32_t.
 -record(insn, {
-        code = 0,
-        jt = 0,
-        jf = 0,
-        k = 0
+        code = 0 :: 0..16#ffff,
+        jt = 0 :: 0..16#ff,
+        jf = 0 :: 0..16#ff,
+        k = 0 :: 0..16#ffffffff
     }).
 
 -define(BPF_STMT(Code, K), bpf:stmt(Code, K)).
