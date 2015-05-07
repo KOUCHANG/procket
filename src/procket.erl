@@ -73,6 +73,11 @@
     progname/0
     ]).
 
+-export_type([
+              socket_family/0, socket_type/0, protocol/0,
+              maybe_atom_family/0, maybe_atom_type/0, maybe_atom_protocol/0
+             ]).
+
 -on_load(on_load/0).
 
 on_load() ->
@@ -120,6 +125,16 @@ recvfrom(_,_,_,_) ->
 read(_,_) ->
     erlang:nif_error(not_implemented).
 
+-type maybe_atom_family() :: socket_family() | integer().
+-type maybe_atom_type() :: socket_type() | integer().
+-type maybe_atom_protocol() :: protocol() | integer().
+
+-spec socket(Family, Type, Protocol) -> {ok, SockFd} | {error, Reason} when
+      Family :: maybe_atom_family(),
+      Type :: maybe_atom_type(),
+      Protocol :: maybe_atom_protocol(),
+      SockFd :: integer(),
+      Reason :: atom(). % return from `erl_errno_id(1)'(einval, enoent, etc.). XXX: Fix the detailed type.
 socket(Family, Type, Protocol) ->
     socket_nif(maybe_atom(family, Family),
         maybe_atom(type, Type),
@@ -376,7 +391,10 @@ progname() ->
         _ -> progname_priv()
     end.
 
+-type socket_family() :: unspec | inet | inet6 | netlink | packet | local | unix | file.
+
 %% Protocol family (aka domain)
+-spec family(socket_family()) -> integer().
 family(unspec) -> 0;
 family(inet) -> 2;
 family(inet6) ->
@@ -392,7 +410,10 @@ family(netlink) -> 16;
 family(packet) -> 17;
 family(Proto) when Proto == local; Proto == unix; Proto == file -> 1.
 
+-type socket_type() :: stream | dgram | raw.
+
 %% Socket type
+-spec type(socket_type()) -> integer().
 type(stream) ->
     case os:type() of
         {unix,sunos} -> 2;
@@ -409,8 +430,11 @@ type(raw) ->
         {unix,_} -> 3
     end.
 
+-type protocol() :: ip | icmp | tcp | udp | ipv6 | icmp6 | 'ipv6-icmp' | raw.
+
 % Select a protocol within the family (0 means use the default
 % protocol in the family)
+-spec protocol(protocol()) -> integer().
 protocol(ip) -> 0;
 protocol(icmp) -> 1;
 protocol(tcp) -> 6;
@@ -420,6 +444,9 @@ protocol(icmp6) -> 58;
 protocol('ipv6-icmp') -> 58;
 protocol(raw) -> 255.
 
+-spec maybe_atom(family, maybe_atom_family()) -> integer();
+          (type, maybe_atom_type()) -> integer();
+          (protocol, maybe_atom_protocol()) -> integer().
 maybe_atom(_Type, Value) when is_integer(Value) -> Value;
 maybe_atom(family, Value) -> family(Value);
 maybe_atom(type, Value) -> type(Value);
