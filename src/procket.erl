@@ -74,9 +74,16 @@
     ]).
 
 -export_type([
+              sock_fd/0,
+              errno_id/0,
+
+              %% socket
               socket_family/0, socket_type/0, protocol/0,
               maybe_atom_family/0, maybe_atom_type/0, maybe_atom_protocol/0
              ]).
+
+-type sock_fd() :: non_neg_integer().
+-type errno_id() :: atom(). % return from `erl_errno_id(1)'(einval, enoent, etc.).
 
 -on_load(on_load/0).
 
@@ -129,12 +136,11 @@ read(_,_) ->
 -type maybe_atom_type() :: socket_type() | integer().
 -type maybe_atom_protocol() :: protocol() | integer().
 
--spec socket(Family, Type, Protocol) -> {ok, SockFd} | {error, Reason} when
+-spec socket(Family, Type, Protocol) -> {ok, sock_fd()} | {error, Reason} when
       Family :: maybe_atom_family(),
       Type :: maybe_atom_type(),
       Protocol :: maybe_atom_protocol(),
-      SockFd :: integer(),
-      Reason :: atom(). % return from `erl_errno_id(1)'(einval, enoent, etc.). XXX: Fix the detailed type.
+      Reason :: errno_id().
 socket(Family, Type, Protocol) ->
     socket_nif(maybe_atom(family, Family),
         maybe_atom(type, Type),
@@ -142,6 +148,11 @@ socket(Family, Type, Protocol) ->
 socket_nif(_,_,_) ->
     erlang:nif_error(not_implemented).
 
+-spec ioctl(sock_fd(), Request, Argp) -> {ok, Arg} | {error, Reason} when
+      Request :: integer(),
+      Argp :: non_neg_integer(),
+      Arg :: binary(),
+      Reason :: errno_id().
 ioctl(_,_,_) ->
     erlang:nif_error(not_implemented).
 buf(_) ->
