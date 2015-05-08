@@ -129,6 +129,7 @@ recvfrom(Socket,Size) ->
 recvfrom(_,_,_,_) ->
     erlang:nif_error(not_implemented).
 
+-spec read(sock_fd(), Length::non_neg_integer()) -> {ok, Buf::binary()} | {error, Reason::errno_id()}.
 read(_,_) ->
     erlang:nif_error(not_implemented).
 
